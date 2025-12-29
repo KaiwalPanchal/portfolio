@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebGL Liquid Glass Effect</title>
+    <meta name="description" content="Interactive liquid glass effect with fluid simulation background">
+    <style>
+        * {
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Glass Card Overlays - positioned over the WebGL canvas */
+        .glass-cards-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .glass-card {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            color: white;
+            text-align: center;
+            padding: 24px 32px;
+            /* The actual glass effect is rendered by WebGL behind this */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border-radius: 24px;
+            /* Matches the WebGL rounded mask */
+        }
+
+        .glass-card:active {
+            transform: translate(-50%, -50%) scale(0.96) !important;
+        }
+
+        /* Premium Borders using pseudo-elements */
+        .glass-card::before,
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            padding: 1.5px;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+        }
+
+        /* Screen blend border layer */
+        .glass-card::before {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.15) 35%,
+                    rgba(255, 255, 255, 0.4) 65%,
+                    rgba(255, 255, 255, 0) 100%);
+            mix-blend-mode: screen;
+            opacity: 0.3;
+            box-shadow:
+                inset 0 0 0 0.5px rgba(255, 255, 255, 0.5),
+                inset 0 1px 3px rgba(255, 255, 255, 0.25);
+        }
+
+        /* Overlay blend border layer */
+        .glass-card::after {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.3) 35%,
+                    rgba(255, 255, 255, 0.6) 65%,
+                    rgba(255, 255, 255, 0) 100%);
+            mix-blend-mode: overlay;
+        }
+
+        .glass-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+            letter-spacing: -0.02em;
+        }
+
+        .glass-card p {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+        }
+
+        /* Instructions Panel */
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.85rem;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .instructions code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Configuration Panel */
+        .config-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            z-index: 1000;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            font-size: 0.85rem;
+            transform: translateX(320px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .config-panel.visible {
+            transform: translateX(0);
+        }
+
+        .config-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: opacity 0.2s;
+        }
+
+        .config-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .config-toggle.active {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .close-config {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .config-group {
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .config-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .config-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.7rem;
+        }
+
+        .control-row {
+            margin-bottom: 12px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .control-value {
+            color: #4a9eff;
+            font-family: monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-row input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas></canvas>
+
+    <!-- Text content that appears on top of glass cards -->
+    <div class="glass-cards-container">
+        <div class="glass-card" id="card1"
+            style="left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40%; height: 20%;">
+            <h2>Liquid Glass Effect</h2>
+            <p>Click and drag to interact with the fluid</p>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>Interact:</strong> Click & drag |
+        <strong>Config:</strong> Open panel top-right
+    </div>
+
+    <!-- Configuration Panel Toggle -->
+    <div class="config-toggle" id="toggleConfig">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </div>
+
+    <!-- Configuration Panel UI -->
+    <div class="config-panel" id="configPanel">
+        <div class="close-config" id="closeConfig">&times;</div>
+        <h3>Glass Settings</h3>
+        <br>
+
+        <div class="config-group">
+            <div class="config-title">Distortion</div>
+            <div class="control-row">
+                <div class="control-label">Scale <span class="control-value" id="val_DISPLACEMENT_SCALE"></span></div>
+                <input type="range" id="inp_DISPLACEMENT_SCALE" min="0" max="0.2" step="0.001">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Glass Blur <span class="control-value" id="val_GLASS_BLUR_RADIUS"></span>
+                </div>
+                <input type="range" id="inp_GLASS_BLUR_RADIUS" min="0" max="32" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Chrom. Ab. <span class="control-value" id="val_CHROMATIC_ABERRATION"></span>
+                </div>
+                <input type="range" id="inp_CHROMATIC_ABERRATION" min="0" max="0.05" step="0.001">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Corner Radius <span class="control-value" id="val_CORNER_RADIUS"></span>
+                </div>
+                <input type="range" id="inp_CORNER_RADIUS" min="0" max="0.1" step="0.001">
+            </div>
+        </div>
+
+        <div class="config-group">
+            <div class="config-title">Noise Process</div>
+            <label class="checkbox-row">
+                <input type="checkbox" id="inp_ANIMATE_NOISE"> Animate Noise
+            </label>
+            <div class="control-row">
+                <div class="control-label">Noise Scale <span class="control-value" id="val_NOISE_SCALE"></span></div>
+                <input type="range" id="inp_NOISE_SCALE" min="0.1" max="10" step="0.1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Noise Speed <span class="control-value" id="val_NOISE_SPEED"></span></div>
+                <input type="range" id="inp_NOISE_SPEED" min="0" max="0.5" step="0.01">
+            </div>
+        </div>
+
+        <div class="config-group">
+            <div class="config-title">Lighting & Color</div>
+            <div class="control-row">
+                <div class="control-label">Fresnel <span class="control-value" id="val_FRESNEL_STRENGTH"></span></div>
+                <input type="range" id="inp_FRESNEL_STRENGTH" min="0" max="1" step="0.01">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Edge Light <span class="control-value" id="val_EDGE_LIGHT_INTENSITY"></span>
+                </div>
+                <input type="range" id="inp_EDGE_LIGHT_INTENSITY" min="0" max="1" step="0.01">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Specular Int. <span class="control-value" id="val_SPECULAR_INTENSITY"></span>
+                </div>
+                <input type="range" id="inp_SPECULAR_INTENSITY" min="0" max="1" step="0.01">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Specular Size <span class="control-value" id="val_SPECULAR_SIZE"></span>
+                </div>
+                <input type="range" id="inp_SPECULAR_SIZE" min="0.1" max="1.0" step="0.01">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Saturation <span class="control-value" id="val_SATURATION"></span></div>
+                <input type="range" id="inp_SATURATION" min="0" max="2" step="0.1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Brightness <span class="control-value" id="val_BRIGHTNESS"></span></div>
+                <input type="range" id="inp_BRIGHTNESS" min="-0.5" max="0.5" step="0.01">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Contrast <span class="control-value" id="val_CONTRAST"></span></div>
+                <input type="range" id="inp_CONTRAST" min="0.5" max="1.5" step="0.01">
+            </div>
+        </div>
+    </div>
+
+    <script src="./webgl-liquid-glass.js"></script>
+
+    <script>
+        // Example: Programmatically add more glass cards
+        // Uncomment these to add additional cards:
+
+        // LiquidGlass.addCard({ x: 0.25, y: 0.3, width: 0.2, height: 0.1, cornerRadius: 0.015 });
+        // LiquidGlass.addCard({ x: 0.75, y: 0.7, width: 0.2, height: 0.1, cornerRadius: 0.015 });
+
+        // Initialize Controls
+        window.addEventListener('load', () => {
+            const config = window.LiquidGlass.config;
+            const toggle = document.getElementById('toggleConfig');
+            const close = document.getElementById('closeConfig');
+            const panel = document.getElementById('configPanel');
+
+            // Toggle Visibility
+            const togglePanel = () => {
+                panel.classList.toggle('visible');
+                toggle.classList.toggle('active');
+            };
+
+            toggle.addEventListener('click', togglePanel);
+            close.addEventListener('click', togglePanel);
+
+            // Bind Inputs
+            const bindControl = (key, isBool = false) => {
+                const input = document.getElementById('inp_' + key);
+                const display = document.getElementById('val_' + key);
+
+                if (input) {
+                    // Set initial value
+                    if (isBool) {
+                        input.checked = config[key];
+                    } else {
+                        input.value = config[key];
+                        if (display) display.textContent = config[key];
+                    }
+
+                    // Listen for changes
+                    input.addEventListener('input', (e) => {
+                        const val = isBool ? e.target.checked : parseFloat(e.target.value);
+                        config[key] = val;
+                        if (display) display.textContent = isBool ? '' : val.toFixed(3);
+                    });
+                }
+            };
+
+            // Bind all controls
+            bindControl('DISPLACEMENT_SCALE');
+            bindControl('GLASS_BLUR_RADIUS');
+            bindControl('CHROMATIC_ABERRATION');
+
+            // Special handling for Corner Radius (affects both JS and CSS)
+            const crInput = document.getElementById('inp_CORNER_RADIUS');
+            const crDisplay = document.getElementById('val_CORNER_RADIUS');
+            if (crInput) {
+                const initialCR = window.LiquidGlass.glassCards[0].cornerRadius;
+                crInput.value = initialCR;
+                crDisplay.textContent = initialCR.toFixed(3);
+                crInput.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    window.LiquidGlass.glassCards.forEach(card => card.cornerRadius = val);
+                    crDisplay.textContent = val.toFixed(3);
+
+                    // Update CSS border-radius as well (approximate conversion)
+                    const pixels = val * window.innerHeight * 0.8; // heuristic
+                    document.querySelectorAll('.glass-card').forEach(card => {
+                        card.style.borderRadius = pixels + 'px';
+                    });
+                });
+            }
+
+            bindControl('ANIMATE_NOISE', true);
+            bindControl('NOISE_SCALE');
+            bindControl('NOISE_SPEED');
+            bindControl('FRESNEL_STRENGTH');
+            bindControl('EDGE_LIGHT_INTENSITY');
+            bindControl('SPECULAR_INTENSITY');
+            bindControl('SPECULAR_SIZE');
+            bindControl('SATURATION');
+            bindControl('BRIGHTNESS');
+            bindControl('CONTRAST');
+        });
+    </script>
+</body>
+
+</html>
