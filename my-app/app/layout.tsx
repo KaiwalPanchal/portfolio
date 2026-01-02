@@ -2,8 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import "./globals.css"
-
-import FluidBackground from "@/components/fluid-background/FluidBackground"
+import { GlassProvider, WebGLGlassBackground } from "@/components/webgl-glass"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -25,9 +24,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body className="font-sans antialiased">
-        <FluidBackground />
-        <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
+        <GlassProvider>
+          <WebGLGlassBackground />
+          <div style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
+            <div style={{ pointerEvents: "auto" }}>{children}</div>
+          </div>
+        </GlassProvider>
       </body>
     </html>
   )
 }
+

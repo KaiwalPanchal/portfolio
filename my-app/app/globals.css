@@ -117,8 +117,7 @@
   }
 
   body {
-    @apply text-foreground;
-    /* bg-background removed - FluidBackground canvas provides the background */
+    @apply bg-background text-foreground;
   }
 }
 
@@ -138,4 +137,33 @@
       transform: translateY(0);
     }
   }
+}
+
+/* Glass Card Component Styles */
+.glass-card {
+  position: relative;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Premium border gradient overlay */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 35%,
+    rgba(255, 255, 255, 0.2) 65%,
+    rgba(255, 255, 255, 0) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }

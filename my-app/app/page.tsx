@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { uiConfig } from "@/components/fluid-background/config"
-import LiquidGlassCard from "@/components/LiquidGlassCard"
+// import { GlassCard } from "@/components/webgl-glass" 
+import LiquidGlassCard from "@/components/fluid-simulation/LiquidGlassCard"
+import FluidSimulation from "@/components/fluid-simulation/FluidSimulation"
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true)
@@ -41,13 +42,7 @@ export default function Home() {
   return (
     <>
       <nav className="fixed left-8 top-1/2 -translate-y-1/2 z-50 hidden lg:block">
-        <LiquidGlassCard
-          blur={14}
-          backgroundOpacity={0.06}
-          borderOpacity={0.1}
-          borderRadius={16}
-          className="p-2"
-        >
+        <LiquidGlassCard className="p-2">
           <div className="flex flex-col gap-3">
             {["intro", "work", "thoughts", "connect"].map((section) => (
               <button
@@ -62,10 +57,14 @@ export default function Home() {
         </LiquidGlassCard>
       </nav>
 
-      <div
-        className={`min-h-screen text-foreground relative ${uiConfig.backdropBlur ? 'backdrop-blur-sm' : ''}`}
-        style={{ backgroundColor: `rgb(var(--background) / ${uiConfig.overlayOpacity / 100})` }}
-      >
+      {/* Fluid Simulation Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="w-full h-full pointer-events-none">
+          <FluidSimulation />
+        </div>
+      </div>
+
+      <div className="min-h-screen text-foreground relative z-10">
         <main className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-16">
           <header
             id="intro"
@@ -115,17 +114,8 @@ export default function Home() {
                   <div className="text-sm text-muted-foreground font-mono">FOCUS</div>
                   <div className="flex flex-wrap gap-2">
                     {["HubL", "React", "TypeScript", "HubSpot CMS", "Node.js"].map((skill) => (
-                      <LiquidGlassCard
-                        key={skill}
-                        blur={10}
-                        backgroundOpacity={0.05}
-                        borderOpacity={0.1}
-                        borderRadius={20}
-                        className="hover:scale-105"
-                      >
-                        <span className="px-3 py-1 text-xs block">
-                          {skill}
-                        </span>
+                      <LiquidGlassCard key={skill} className="hover:scale-105 transition-transform">
+                        <span className="px-3 py-1 text-xs block">{skill}</span>
                       </LiquidGlassCard>
                     ))}
                   </div>
@@ -176,14 +166,7 @@ export default function Home() {
                     tech: ["React", "Node.js", "MySQL"],
                   },
                 ].map((job, index) => (
-                  <LiquidGlassCard
-                    key={index}
-                    blur={12}
-                    backgroundOpacity={0.04}
-                    borderOpacity={0.08}
-                    borderRadius={16}
-                    className="group hover:scale-[1.01]"
-                  >
+                  <LiquidGlassCard key={index} className="group hover:scale-[1.01] transition-transform">
                     <div className="grid lg:grid-cols-12 gap-4 sm:gap-8 py-6 sm:py-8 px-4 sm:px-6">
                       <div className="lg:col-span-2">
                         <div className="text-xl sm:text-2xl font-light text-muted-foreground group-hover:text-foreground transition-colors duration-500">
@@ -251,13 +234,7 @@ export default function Home() {
                     readTime: "4 min",
                   },
                 ].map((post, index) => (
-                  <LiquidGlassCard
-                    key={index}
-                    className="group cursor-pointer hover:scale-[1.02]"
-                    blur={16}
-                    backgroundOpacity={0.06}
-                    borderOpacity={0.12}
-                  >
+                  <LiquidGlassCard key={index} className="group cursor-pointer hover:scale-[1.02] transition-transform">
                     <article className="p-6 sm:p-8">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
@@ -334,17 +311,8 @@ export default function Home() {
                     { name: "HubSpot Community", handle: "@felixmacaspac", url: "#" },
                     { name: "LinkedIn", handle: "felixmacaspac", url: "#" },
                   ].map((social) => (
-                    <LiquidGlassCard
-                      key={social.name}
-                      className="group hover:scale-[1.02]"
-                      blur={14}
-                      backgroundOpacity={0.05}
-                      borderOpacity={0.1}
-                    >
-                      <Link
-                        href={social.url}
-                        className="block p-4"
-                      >
+                    <LiquidGlassCard key={social.name} className="group hover:scale-[1.02] transition-transform">
+                      <Link href={social.url} className="block p-4">
                         <div className="space-y-2">
                           <div className="text-foreground group-hover:text-muted-foreground transition-colors duration-300">
                             {social.name}
@@ -367,62 +335,24 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-4">
-                <LiquidGlassCard
-                  blur={12}
-                  backgroundOpacity={0.05}
-                  borderOpacity={0.1}
-                  borderRadius={10}
-                  className="hover:scale-105"
-                >
-                  <button
-                    onClick={toggleTheme}
-                    className="group p-3"
-                    aria-label="Toggle theme"
-                  >
+                <LiquidGlassCard className="hover:scale-105 transition-transform">
+                  <button onClick={toggleTheme} className="group p-3" aria-label="Toggle theme">
                     {isDark ? (
-                      <svg
-                        className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                          clipRule="evenodd"
-                        />
+                      <svg className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                       </svg>
                     ) : (
-                      <svg
-                        className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
+                      <svg className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                       </svg>
                     )}
                   </button>
                 </LiquidGlassCard>
 
-                <LiquidGlassCard
-                  blur={12}
-                  backgroundOpacity={0.05}
-                  borderOpacity={0.1}
-                  borderRadius={10}
-                  className="hover:scale-105"
-                >
+                <LiquidGlassCard className="hover:scale-105 transition-transform">
                   <button className="group p-3">
-                    <svg
-                      className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
+                    <svg className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </button>
                 </LiquidGlassCard>
