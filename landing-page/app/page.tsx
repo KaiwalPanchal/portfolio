@@ -193,44 +193,66 @@ export default function Home() {
           className="min-h-screen py-20 sm:py-32 opacity-0"
         >
           <div className="space-y-12 sm:space-y-16">
-            <h2 className="text-3xl sm:text-4xl font-light">Recent Thoughts</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl sm:text-4xl font-light">Recent Thoughts</h2>
+              <Link
+                href="/blog"
+                className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300"
+              >
+                <span>View all</span>
+                <svg
+                  className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
+              </Link>
+            </div>
 
             <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
-              {portfolioData.thoughts.map((post, index) => (
-                <article
-                  key={index}
-                  className="group p-6 sm:p-8 border border-white/10 rounded-xl hover:border-white/20 transition-all duration-500 hover:shadow-2xl cursor-pointer backdrop-blur-xl bg-white/5 shadow-lg shadow-black/5"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-                      <span>{post.date}</span>
-                      <span>{post.readTime}</span>
+              {portfolioData.thoughts.slice(0, 4).map((post, index) => (
+                <Link href="/blog" key={index}>
+                  <article
+                    className="group p-6 sm:p-8 border border-white/10 rounded-xl hover:border-white/20 transition-all duration-500 hover:shadow-2xl cursor-pointer backdrop-blur-xl bg-white/5 shadow-lg shadow-black/5 h-full"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                        <span>{post.date}</span>
+                        <span>{post.readTime}</span>
+                      </div>
+
+                      <h3 className="text-lg sm:text-xl font-medium group-hover:text-muted-foreground transition-colors duration-300">
+                        {post.title}
+                      </h3>
+
+                      <p className="text-muted-foreground leading-relaxed">{post.excerpt}</p>
+
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                        <span>Read more</span>
+                        <svg
+                          className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                      </div>
                     </div>
-
-                    <h3 className="text-lg sm:text-xl font-medium group-hover:text-muted-foreground transition-colors duration-300">
-                      {post.title}
-                    </h3>
-
-                    <p className="text-muted-foreground leading-relaxed">{post.excerpt}</p>
-
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                      <span>Read more</span>
-                      <svg
-                        className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </article>
+                  </article>
+                </Link>
               ))}
             </div>
           </div>
