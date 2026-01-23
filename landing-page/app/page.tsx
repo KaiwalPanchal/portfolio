@@ -3,23 +3,22 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import AnimatedLiquidBackground from "../components/liquid/AnimatedLiquidBackground"
+import { portfolioData } from "../data/portfolio"
 
 export default function Home() {
-  const [isDark, setIsDark] = useState(true)
+
   const [activeSection, setActiveSection] = useState("")
   const [opacity, setOpacity] = useState(1)
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark)
-  }, [isDark])
+
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY
       const windowHeight = window.innerHeight
-      // Fade out as we scroll down. Fully transparent after 1 viewport height.
-      const newOpacity = Math.max(0, 1 - scrollY / windowHeight)
+      // Prism animation - Fades from 100% to 70% over 70% of the window height
+      const newOpacity = Math.max(0.7, 1 - (scrollY / (windowHeight * 0.7)) * 0.3)
       setOpacity(newOpacity)
     }
 
@@ -54,19 +53,19 @@ export default function Home() {
     return () => observer.disconnect()
   }, [])
 
-  const toggleTheme = () => {
-    setIsDark(!isDark)
-  }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
       {/* Prism Background */}
       <div
-        className="fixed inset-0 z-0 transition-opacity duration-100 ease-out"
+        className="fixed inset-0 z-0 transition-opacity duration-100 ease-out pointer-events-none"
         style={{ opacity: opacity }}
       >
         <AnimatedLiquidBackground preset="Prism" />
       </div>
+
+
 
       <nav className="fixed left-8 top-1/2 -translate-y-1/2 z-10 hidden lg:block">
         <div className="flex flex-col gap-4">
@@ -91,28 +90,25 @@ export default function Home() {
           <div className="grid lg:grid-cols-5 gap-12 sm:gap-16 w-full">
             <div className="lg:col-span-3 space-y-6 sm:space-y-8">
               <div className="space-y-3 sm:space-y-2">
-                <div className="text-sm text-muted-foreground font-mono tracking-wider">PORTFOLIO / 2025</div>
+                <div className="text-sm text-muted-foreground font-mono tracking-wider">PORTFOLIO / {portfolioData.personal.year}</div>
                 <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight">
-                  Felix
+                  {portfolioData.personal.name}
                   <br />
-                  <span className="text-muted-foreground">Macaspac</span>
+                  <span className="text-muted-foreground">{portfolioData.personal.surname}</span>
                 </h1>
               </div>
 
               <div className="space-y-6 max-w-md">
                 <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-                  Frontend Developer crafting digital experiences at the intersection of
-                  <span className="text-foreground"> design</span>,<span className="text-foreground"> technology</span>,
-                  and
-                  <span className="text-foreground"> user experience</span>.
+                  {portfolioData.personal.profession} {portfolioData.personal.bio}
                 </p>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Available for work
+                    {portfolioData.personal.availability}
                   </div>
-                  <div>Philippines</div>
+                  <div>{portfolioData.personal.location}</div>
                 </div>
               </div>
             </div>
@@ -121,16 +117,16 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground font-mono">CURRENTLY</div>
                 <div className="space-y-2">
-                  <div className="text-foreground">Frontend Developer</div>
-                  <div className="text-muted-foreground">@ Hububble</div>
-                  <div className="text-xs text-muted-foreground">2021 — Present</div>
+                  <div className="text-foreground">{portfolioData.personal.currentJob.role}</div>
+                  <div className="text-muted-foreground">@ {portfolioData.personal.currentJob.company}</div>
+                  <div className="text-xs text-muted-foreground">{portfolioData.personal.currentJob.period}</div>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground font-mono">FOCUS</div>
                 <div className="flex flex-wrap gap-2">
-                  {["HubL", "React", "TypeScript", "HubSpot CMS", "Node.js"].map((skill) => (
+                  {portfolioData.personal.focus.map((skill) => (
                     <span
                       key={skill}
                       className="px-3 py-1 text-xs border border-border rounded-full hover:border-muted-foreground/50 transition-colors duration-300"
@@ -156,39 +152,10 @@ export default function Home() {
             </div>
 
             <div className="space-y-8 sm:space-y-12">
-              {[
-                {
-                  year: "2023",
-                  role: "Senior Frontend Engineer",
-                  company: "Vercel",
-                  description: "Leading frontend architecture for developer tools and AI-powered features.",
-                  tech: ["React", "TypeScript", "Next.js"],
-                },
-                {
-                  year: "2022",
-                  role: "Frontend Engineer",
-                  company: "Linear",
-                  description: "Built performant interfaces for project management and team collaboration.",
-                  tech: ["React", "GraphQL", "Framer Motion"],
-                },
-                {
-                  year: "2021",
-                  role: "Full Stack Developer",
-                  company: "Stripe",
-                  description: "Developed payment infrastructure and merchant-facing dashboard features.",
-                  tech: ["Ruby", "React", "PostgreSQL"],
-                },
-                {
-                  year: "2019",
-                  role: "Software Engineer",
-                  company: "Airbnb",
-                  description: "Created booking flow optimizations and host management tools.",
-                  tech: ["React", "Node.js", "MySQL"],
-                },
-              ].map((job, index) => (
+              {portfolioData.work.map((job, index) => (
                 <div
                   key={index}
-                  className="group grid lg:grid-cols-12 gap-4 sm:gap-8 py-6 sm:py-8 border-b border-border/50 hover:border-border transition-colors duration-500"
+                  className="group grid lg:grid-cols-12 gap-4 sm:gap-8 p-6 sm:p-8 border border-white/10 rounded-xl hover:border-white/20 transition-all duration-500 hover:shadow-2xl cursor-pointer backdrop-blur-xl bg-white/5 shadow-lg shadow-black/5"
                 >
                   <div className="lg:col-span-2">
                     <div className="text-xl sm:text-2xl font-light text-muted-foreground group-hover:text-foreground transition-colors duration-500">
@@ -229,35 +196,10 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-light">Recent Thoughts</h2>
 
             <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
-              {[
-                {
-                  title: "The Future of Web Development",
-                  excerpt: "Exploring how AI and automation are reshaping the way we build for the web.",
-                  date: "Dec 2024",
-                  readTime: "5 min",
-                },
-                {
-                  title: "Design Systems at Scale",
-                  excerpt: "Lessons learned from building and maintaining design systems across multiple products.",
-                  date: "Nov 2024",
-                  readTime: "8 min",
-                },
-                {
-                  title: "Performance-First Development",
-                  excerpt: "Why performance should be a first-class citizen in your development workflow.",
-                  date: "Oct 2024",
-                  readTime: "6 min",
-                },
-                {
-                  title: "The Art of Code Review",
-                  excerpt: "Building better software through thoughtful and constructive code reviews.",
-                  date: "Sep 2024",
-                  readTime: "4 min",
-                },
-              ].map((post, index) => (
+              {portfolioData.thoughts.map((post, index) => (
                 <article
                   key={index}
-                  className="group p-6 sm:p-8 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-500 hover:shadow-lg cursor-pointer"
+                  className="group p-6 sm:p-8 border border-white/10 rounded-xl hover:border-white/20 transition-all duration-500 hover:shadow-2xl cursor-pointer backdrop-blur-xl bg-white/5 shadow-lg shadow-black/5"
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
@@ -306,10 +248,10 @@ export default function Home() {
 
                 <div className="space-y-4">
                   <Link
-                    href="mailto:test@example.com"
+                    href={`mailto:${portfolioData.connect.email}`}
                     className="group flex items-center gap-3 text-foreground hover:text-muted-foreground transition-colors duration-300"
                   >
-                    <span className="text-base sm:text-lg">test@example.com</span>
+                    <span className="text-base sm:text-lg">{portfolioData.connect.email}</span>
                     <svg
                       className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
                       fill="none"
@@ -327,16 +269,11 @@ export default function Home() {
               <div className="text-sm text-muted-foreground font-mono">ELSEWHERE</div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { name: "GitHub", handle: "@felixmacaspac", url: "#" },
-                  { name: "v0.dev", handle: "@felixmacaspac", url: "#" },
-                  { name: "HubSpot Community", handle: "@felixmacaspac", url: "#" },
-                  { name: "LinkedIn", handle: "felixmacaspac", url: "#" },
-                ].map((social) => (
+                {portfolioData.connect.socials.map((social) => (
                   <Link
                     key={social.name}
                     href={social.url}
-                    className="group p-4 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-300 hover:shadow-sm"
+                    className="group p-4 border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 hover:shadow-xl backdrop-blur-xl bg-white/5 shadow-lg shadow-black/5"
                   >
                     <div className="space-y-2">
                       <div className="text-foreground group-hover:text-muted-foreground transition-colors duration-300">
@@ -354,38 +291,12 @@ export default function Home() {
         <footer className="py-12 sm:py-16 border-t border-border">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 sm:gap-8">
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">© 2025 Felix Macaspac. All rights reserved.</div>
-              <div className="text-xs text-muted-foreground">Built with v0.dev by Felix Macaspac</div>
+              <div className="text-sm text-muted-foreground">{portfolioData.footer.copyright}</div>
+              <div className="text-xs text-muted-foreground">{portfolioData.footer.builtWith}</div>
             </div>
 
             <div className="flex items-center gap-4">
-              <button
-                onClick={toggleTheme}
-                className="group p-3 rounded-lg border border-border hover:border-muted-foreground/50 transition-all duration-300"
-                aria-label="Toggle theme"
-              >
-                {isDark ? (
-                  <svg
-                    className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                  </svg>
-                )}
-              </button>
+
 
               <button className="group p-3 rounded-lg border border-border hover:border-muted-foreground/50 transition-all duration-300">
                 <svg
@@ -405,6 +316,13 @@ export default function Home() {
             </div>
           </div>
         </footer>
+
+        {/* Extra scroll space at the bottom */}
+        <section className="h-[50vh] flex items-center justify-center">
+          <div className="text-muted-foreground font-mono text-sm animate-pulse">
+            END OF PORTFOLIO
+          </div>
+        </section>
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none"></div>
